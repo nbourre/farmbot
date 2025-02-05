@@ -12,7 +12,7 @@ class FarmBotService:
     def get_status(self):
         return self.fb.api_get("device") # Retrieves FarmBot device status
 
-    def move(self, x, y, z):
+    def move(self, x=None, y=None, z=None):
         self.fb.move(x, y, z, safe_z=True);
         return {"status": "Moving", "position": {"x": x, "y": y, "z": z}}
 
