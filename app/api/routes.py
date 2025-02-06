@@ -20,3 +20,15 @@ def garden_size():
 @router.post("/toast")
 def toast(message: str):
     return farmbot_service.toast(message)
+
+@router.get("/grid_travel")
+def grid_travel(start_x: int = 0, start_y: int = 0, width: int = None, length: int = None, rows: int = None, columns: int = None):
+    return farmbot_service.grid_travel(start_x, start_y, width, length, rows, columns)
+
+@router.post("/lock")
+def lock():
+    return farmbot_service.lock()
+
+@router.post("/unlock")
+def unlock():
+    return farmbot_service.unlock()
