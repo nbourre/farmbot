@@ -69,3 +69,7 @@ class FarmBotService:
 
                 except Exception as e:
                     print(f"Error moving to ({x}, {y}): {e}")
+                    
+    def get_logs(self):
+        # Endpoint : https://my.farm.bot/api/logs
+        return self.fb.api_get("logs")

@@ -32,3 +32,7 @@ def lock():
 @router.post("/unlock")
 def unlock():
     return farmbot_service.unlock()
+
+@router.get("/logs")
+def logs():
+    return farmbot_service.get_logs()
