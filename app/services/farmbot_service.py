@@ -8,6 +8,7 @@ class FarmBotService:
         self.fb = Farmbot()
         self.token = load_token()
         self.fb.set_token(self.token)
+        self.stop = False
 
     def get_status(self):
         return self.fb.api_get("device") # Retrieves FarmBot device status
@@ -39,12 +40,19 @@ class FarmBotService:
 
         width = width or max_x
         length = length or max_y
+        
+        opposite_x = start_x + width if start_x + width <= max_x else max_x
+        opposite_y = start_y + length if start_y + length <= max_y else max_y
 
         rows = rows or 3
         columns = columns or 3
 
-        step_x = (width - start_x) // (columns - 1) if columns > 1 else 0
-        step_y = (length - start_y) // (rows - 1) if rows > 1 else 0
+        step_x = (opposite_x - start_x) // (columns - 1) if columns > 1 else 0
+        step_y = (opposite_y - start_y) // (rows - 1) if rows > 1 else 0
+        
+        message = f"Grid travel: {rows}x{columns} grid, {step_x}x{step_y} steps, starting at ({start_x}, {start_y}), width {width}, length {length}"
+        
+        self.fb.send_message(message, message_type="info")
 
         for row in range(rows):
             y = start_y + row * step_y

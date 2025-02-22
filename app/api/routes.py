@@ -21,7 +21,7 @@ def garden_size():
 def toast(message: str):
     return farmbot_service.toast(message)
 
-@router.get("/grid_travel")
+@router.post("/grid_travel")
 def grid_travel(start_x: int = 0, start_y: int = 0, width: int = None, length: int = None, rows: int = None, columns: int = None):
     return farmbot_service.grid_travel(start_x, start_y, width, length, rows, columns)
 
