@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from typing import Optional
+from fastapi import Query
 from app.services.farmbot_service import FarmBotService
 
 router = APIRouter()
@@ -10,8 +12,16 @@ def read_status():
     return farmbot_service.get_status()
 
 @router.post("/move")
-def move_bot(x: int, y: int, z: int):
-    return farmbot_service.move(x, y, z)
+def move_bot(
+    x: Optional[int] = Query(None),
+    y: Optional[int] = Query(None),
+    z: Optional[int] = Query(None),
+    safe_z: Optional[int] = Query(None),
+    speed: Optional[float] = Query(None),
+    override: Optional[bool] = Query(False),
+):
+    return farmbot_service.move(x, y, z, safe_z, speed, override)
+
 
 @router.get("/garden_size")
 def garden_size():
@@ -36,3 +46,7 @@ def unlock():
 @router.get("/logs")
 def logs():
     return farmbot_service.get_logs()
+
+@router.post("/go_home")
+def go_home():
+    return farmbot_service.goto_home()

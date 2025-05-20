@@ -3,6 +3,7 @@ from app.utils.auth import load_token
 import time
 from functools import lru_cache
 
+
 class FarmBotService:
     def __init__(self):
         self.fb = Farmbot()
@@ -13,9 +14,21 @@ class FarmBotService:
     def get_status(self):
         return self.fb.api_get("device") # Retrieves FarmBot device status
 
-    def move(self, x=None, y=None, z=None):
-        self.fb.move(x, y, z, safe_z=True);
-        return {"status": "Moving", "position": {"x": x, "y": y, "z": z}}
+    def move(self, x=None, y=None, z=None, safe_z=None, speed=None, override=False):
+        if not override:
+            # Safety limits
+            if x is not None and x < 770:
+                return {"status": "error", "message": "X value too low. Minimum: 770"}
+
+            if y is not None and y < 180:
+                return {"status": "error", "message": "Y value too low. Minimum: 180"}
+
+        return self.fb.move(x, y, z, safe_z, speed)
+    
+    def goto_home(self):
+        return self.fb.find_home()
+        # Endpoint : https://my.farm.bot/api/device/find_home
+
 
     @lru_cache
     def garden_size(self):
