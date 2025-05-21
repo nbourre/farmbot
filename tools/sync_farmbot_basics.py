@@ -15,11 +15,13 @@ def clean_payload(payload):
 
 # === Count Resources ===
 def count_resources(fb):
+    points = fb.api_get("points")
     return {
         "tools": len(fb.api_get("tools")),
-        "tool_slots": len(fb.api_get("tool_slots")),
-        "points": len(fb.api_get("points"))
+        "tool_slots": len([p for p in points if p["pointer_type"] == "ToolSlot"]),
+        "points": len(points)
     }
+
 
 # === Save Backup to JSON Files ===
 def save_backup(name, data, folder):
@@ -34,8 +36,10 @@ def backup_all(prod_fb):
     folder = os.path.join("backups", timestamp)
     print(f"\n📦 Backing up production FarmBot data to {folder}...")
     save_backup("tools", prod_fb.api_get("tools"), folder)
-    save_backup("tool_slots", prod_fb.api_get("tool_slots"), folder)
-    save_backup("points", prod_fb.api_get("points"), folder)
+    all_points = prod_fb.api_get("points")
+    save_backup("points", all_points, folder)
+    tool_slots = [p for p in all_points if p["pointer_type"] == "ToolSlot"]
+    save_backup("tool_slots", tool_slots, folder)
 
 
 # === Sync Functions ===
@@ -46,13 +50,15 @@ def sync_tools(prod_fb, sim_fb):
         sim_fb.post("tools", clean_payload(deepcopy(tool)))
 
 def sync_tool_slots(prod_fb, sim_fb):
-    slots = prod_fb.api_get("tool_slots")["tool_slots"]
-    print(f"Syncing {len(slots)} tool slots...")
-    for slot in slots:
-        sim_fb.post("tool_slots", clean_payload(deepcopy(slot)))
+    all_points = prod_fb.api_get("points")
+    tool_slots = [p for p in all_points if p["pointer_type"] == "ToolSlot"]
+    print(f"Syncing {len(tool_slots)} tool slots...")
+    for slot in tool_slots:
+        sim_fb.api_post("points", clean_payload(deepcopy(slot)))
+
 
 def sync_points(prod_fb, sim_fb):
-    points = prod_fb.api_get("points")["points"]
+    points = prod_fb.api_get("points")
     print(f"Syncing {len(points)} points...")
     for point in points:
         sim_fb.post("points", clean_payload(deepcopy(point)))

@@ -1,0 +1,90 @@
+[
+  {
+    "id": 62524,
+    "created_at": "2024-03-07T16:12:45.388Z",
+    "updated_at": "2024-03-07T16:12:45.388Z",
+    "name": "Seed Tray 2",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 62523,
+    "created_at": "2024-03-07T16:12:06.247Z",
+    "updated_at": "2024-03-07T16:12:06.247Z",
+    "name": "Seed Bin 2",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54277,
+    "created_at": "2023-11-10T13:56:23.107Z",
+    "updated_at": "2023-11-10T13:56:23.107Z",
+    "name": "Rotary Tool",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54276,
+    "created_at": "2023-11-10T13:56:23.100Z",
+    "updated_at": "2023-11-10T13:56:23.100Z",
+    "name": "Weeder",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54275,
+    "created_at": "2023-11-10T13:56:23.093Z",
+    "updated_at": "2024-03-07T16:33:29.254Z",
+    "name": "Watering Nozzle",
+    "status": "active",
+    "flow_rate_ml_per_s": 60
+  },
+  {
+    "id": 54274,
+    "created_at": "2023-11-10T13:56:23.086Z",
+    "updated_at": "2023-11-10T13:56:23.086Z",
+    "name": "Soil Sensor",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54273,
+    "created_at": "2023-11-10T13:56:23.079Z",
+    "updated_at": "2023-11-10T13:56:23.079Z",
+    "name": "Seeder",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54272,
+    "created_at": "2023-11-10T13:56:23.071Z",
+    "updated_at": "2023-11-10T13:56:23.071Z",
+    "name": "Seed Trough 2",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54271,
+    "created_at": "2023-11-10T13:56:23.063Z",
+    "updated_at": "2023-11-10T13:56:23.063Z",
+    "name": "Seed Trough 1",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54270,
+    "created_at": "2023-11-10T13:56:23.056Z",
+    "updated_at": "2023-11-10T13:56:23.056Z",
+    "name": "Seed Tray",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  },
+  {
+    "id": 54269,
+    "created_at": "2023-11-10T13:56:23.048Z",
+    "updated_at": "2023-11-10T13:56:23.048Z",
+    "name": "Seed Bin",
+    "status": "active",
+    "flow_rate_ml_per_s": 0
+  }
+]
