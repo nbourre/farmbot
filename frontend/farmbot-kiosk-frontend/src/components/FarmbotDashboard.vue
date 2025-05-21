@@ -3,8 +3,8 @@
         <h1>FarmBot Kiosk</h1>
 
         <div class="section">
-            <button @click="goHome">🏠 Home</button>
-            <button @click="getStatus">📡 Status</button>
+            <button @click="goHome">🏠 Aller à l'origine</button>
+            <button @click="getStatus">📡 Statut</button>
             <button @click="sendToast">📢 Toast</button>
             <div class="section">
                 <label>
@@ -19,20 +19,43 @@
                     Z:
                     <input type="number" v-model.number="z" placeholder="Entrer Z" />
                 </label>
-                <button @click="move">📍 Move</button>
+                <button @click="move">📍 Déplacer</button>
             </div>
 
-            <button @click="lock">🛑 Emergency Stop</button>
+            <button @click="lock">🛑 Arrêt d'urgence</button>
         </div>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         <pre v-if="!errorMessage">{{ result }}</pre>
 
         <pre>{{ result }}</pre>
+        <div class="status-block">
+            <h3>🛰 Statut du FarmBot</h3>
+            <div v-if="status.busy" class="busy-indicator">
+                🔄 En mouvement...
+            </div>
+            <div v-else class="idle-indicator">
+                ✅ Prêt
+            </div>
+            <p><strong>Busy:</strong> {{ status.busy }}</p>
+            <p><strong>Position:</strong> X={{ status.position?.x }} Y={{ status.position?.y }} Z={{ status.position?.z }}</p>
+            <p><strong>Axes:</strong> X={{ status.axis_states?.x }} Y={{ status.axis_states?.y }} Z={{ status.axis_states?.z }}</p>
+            <p><strong>Sync:</strong> {{ status.sync_status }}</p>
+        </div>
+        <div class="camera-block">
+            <h3>📷 Caméra</h3>
+            <button @click="takePhoto" :disabled="loadingPhoto">
+                {{ loadingPhoto ? 'Capture en cours...' : '📸 Prendre une photo' }}
+            </button>
+
+            <div v-if="photoError" class="error">{{ photoError }}</div>
+
+            <img v-if="cameraUrl" :src="cameraUrl" alt="Photo FarmBot" class="camera-image" />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 // Change this to match your backend address
@@ -40,6 +63,10 @@ const API_BASE = 'http://localhost:8000'
 
 const result = ref('')
 const errorMessage = ref('')
+const status = ref({})
+const cameraUrl = ref('')
+const loadingPhoto = ref(false)
+const photoError = ref('')
 
 const x = ref(null)
 const y = ref(null)
@@ -96,6 +123,43 @@ async function lock() {
     const res = await axios.post(`${API_BASE}/lock`)
     result.value = res.data
 }
+
+async function fetchLiveStatus() {
+  try {
+    const res = await axios.get(`${API_BASE}/live_status`)
+    status.value = res.data
+  } catch (err) {
+    console.error("Erreur de récupération du statut :", err)
+  }
+}
+
+async function takePhoto() {
+  loadingPhoto.value = true
+  cameraUrl.value = ''
+  photoError.value = ''
+
+  try {
+    const res = await axios.post(`${API_BASE}/take_photo`)
+    if (res.data.url) {
+      cameraUrl.value = res.data.url
+    } else {
+      photoError.value = res.data.error || 'Aucune URL reçue.'
+    }
+  } catch (err) {
+    photoError.value = 'Erreur lors de la prise de photo.'
+    console.error(err)
+  } finally {
+    loadingPhoto.value = false
+  }
+}
+
+
+onMounted(() => {
+  fetchLiveStatus()
+  setInterval(fetchLiveStatus, 2000)
+})
+
+
 </script>
 
 <style scoped>
@@ -140,4 +204,46 @@ input[type="number"] {
     font-weight: bold;
     margin-top: 1rem;
 }
+
+.status-block {
+  margin-top: 2rem;
+  background-color: #f3f3f3;
+  padding: 1rem;
+  border-left: 5px solid #3c82f6;
+}
+
+.busy-indicator {
+  color: #d97706;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.idle-indicator {
+  color: #059669;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.camera-block {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.camera-image {
+  margin-top: 1rem;
+  max-width: 100%;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+
+
 </style>

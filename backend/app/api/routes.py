@@ -50,3 +50,12 @@ def logs():
 @router.post("/go_home")
 def go_home():
     return farmbot_service.goto_home()
+
+@router.get("/live_status")
+def live_status():
+    return farmbot_service.get_current_status()
+
+@router.post("/take_photo")
+async def take_photo():
+    print("Taking photo")
+    return await farmbot_service.take_photo()

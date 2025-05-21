@@ -12,6 +12,6 @@ TOKEN = fb.get_token(EMAIL, PASSWORD, SERVER)
 print(f'{TOKEN = }')
 
 # save token to file
-with open('farmbot_authorization_token.json', 'w') as f:
+with open('farmbot_authorization_token_prod.json', 'w') as f:
     f.write(json.dumps(TOKEN))
     print('token saved to file')

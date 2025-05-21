@@ -205,4 +205,4 @@ pip-selfcheck.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
-farmbot_authorization_token.json
+farmbot_authorization_token*.json

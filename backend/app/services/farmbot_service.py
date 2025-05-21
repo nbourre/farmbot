@@ -2,7 +2,8 @@ from farmbot import Farmbot
 from app.utils.auth import load_token
 import time
 from functools import lru_cache
-
+from app.utils.mqtt_client import FarmbotMQTTClient
+import asyncio
 
 class FarmBotService:
     def __init__(self):
@@ -10,6 +11,28 @@ class FarmBotService:
         self.token = load_token()
         self.fb.set_token(self.token)
         self.stop = False
+        self.status_data = {}
+        
+        # Initialize MQTT client
+        self.mqtt = FarmbotMQTTClient(on_status=self._update_status)
+        self.mqtt.connect()
+        
+    def _update_status(self, payload):
+        self.status_data = payload
+
+    def get_current_status(self):
+        info = self.status_data.get("informational_settings", {})
+        position = self.status_data.get("location_data", {}).get("position", {})
+        axis_states = self.status_data.get("location_data", {}).get("axis_states", {})
+        return {
+            "busy": info.get("busy", None),
+            "idle": info.get("idle", None),
+            "position": position,
+            "axis_states": axis_states,
+            "sync_status": info.get("sync_status", None),
+            "uptime": info.get("uptime", None),
+            "locked": info.get("locked", None),
+        }
 
     def get_status(self):
         return self.fb.api_get("device") # Retrieves FarmBot device status
@@ -94,3 +117,15 @@ class FarmBotService:
     def get_logs(self):
         # Endpoint : https://my.farm.bot/api/logs
         return self.fb.api_get("logs")
+    
+    async def take_photo(self):
+        images = self.fb.take_photo()
+        await asyncio.sleep(5)
+        try:
+            images = self.fb.api_get("images")
+            if not images:
+                return {"error": "No images found"}
+            latest = sorted(images, key=lambda img: img["created_at"], reverse=True)[0]
+            return {"url": latest.get("attachment_url")}
+        except Exception as e:
+            return {"error": str(e)}
