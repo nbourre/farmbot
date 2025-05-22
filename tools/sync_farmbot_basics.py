@@ -149,7 +149,7 @@ def sync_tools(prod_fb, sim_fb, dry_run=False):
             if dry_run:
                 print(f"[DRY-RUN] Would update Tool {tool.get('name')} → ID {remote_id}")
             else:
-                sim_fb.api_put(f"tools/{remote_id}", payload)
+                sim_fb.api_patch(f"tools/{remote_id}", payload)
             updated += 1
         else:
             if dry_run:
@@ -188,7 +188,7 @@ def sync_tool_slots(prod_fb, sim_fb, dry_run=False):
             if dry_run:
                 print(f"[DRY-RUN] Would update ToolSlot '{slot.name}' → ID {already_synced[checksum]}")
             else:
-                sim_fb.api_put(f"points/{already_synced[checksum]}", payload)
+                sim_fb.api_patch(f"points/{already_synced[checksum]}", payload)
             updated += 1
         else:
             if dry_run:
@@ -250,7 +250,7 @@ def sync_points_by_type(prod_fb, sim_fb, dry_run=False):
                 if dry_run:
                     print(f"[DRY-RUN] Would update {ptype} point '{p.name}' → ID {already_synced[checksum]}")
                 else:
-                    sim_fb.api_put(f"points/{already_synced[checksum]}", payload)
+                    sim_fb.api_patch(f"points/{already_synced[checksum]}", payload)
                 updated += 1
             else:
                 if dry_run:
@@ -279,6 +279,54 @@ def sync_points(prod_fb, sim_fb):
     print(f"Syncing {len(points)} points...")
     for point in points:
         sim_fb.post("points", clean_payload(deepcopy(point)))
+
+def sync_farmware_envs(prod_fb, sim_fb, dry_run=False):
+    print_farmware_envs(prod_fb, title="Production Farmware Environment Variables (Before Sync)")
+
+
+    prod_vars = prod_fb.api_get("farmware_envs")
+    sim_vars = sim_fb.api_get("farmware_envs")
+
+    # Build lookup by key
+    sim_lookup = {v["key"]: v for v in sim_vars}
+
+    created, updated = 0, 0
+
+    for var in prod_vars:
+        key = var["key"]
+        value = var["value"]
+        payload = {"key": key, "value": value}
+
+        if key in sim_lookup:
+            remote_id = sim_lookup[key]["id"]
+            if dry_run:
+                print(f"[DRY-RUN] Would update env var '{key}' to '{value}'")
+            else:
+                sim_fb.api_patch(f"farmware_envs/{remote_id}", payload)
+            updated += 1
+        else:
+            if dry_run:
+                print(f"[DRY-RUN] Would create env var '{key}' = '{value}'")
+            else:
+                sim_fb.api_post("farmware_envs", payload)
+            created += 1
+
+    print(f"✅ Farmware variables → Created: {created}, Updated: {updated}")
+
+def print_farmware_envs(fb, title="Farmware Environment Variables"):
+    print(f"\n📋 {title}")
+    try:
+        envs = fb.api_get("farmware_envs")
+    except Exception as e:
+        print(f"❌ Failed to fetch farmware_envs: {e}")
+        return
+
+    if not envs:
+        print("⚠️  No environment variables found.")
+        return
+
+    for env in sorted(envs, key=lambda x: x["key"]):
+        print(f" - {env['key']} = {env['value']}")
 
 
 def load_synced_checksums() -> Dict[str, Dict[str, int]]:
@@ -323,6 +371,9 @@ def print_menu():
     print("4. Sync All")
     print("5. View Resource Counts")
     print("6. Sync Points by Type")
+    print("7. Sync Farmware Env Vars")
+    print("8. View Production Farmware Env Vars")
+    
     print("0. Exit")
 
 def confirm():
@@ -361,9 +412,9 @@ def main():
 
     while True:
         print_menu()
-        choice = input("Enter your choice [1-7]: ").strip()
+        choice = input("Enter your choice [1-0]: ").strip()
 
-        if choice in {"1", "2", "3", "4", "6"}:
+        if choice in {"1", "2", "3", "4", "6", "7"}:
             prod_counts = count_resources(prod_fb)
             sim_counts = count_resources(sim_fb)
             show_comparison(prod_counts, sim_counts)
@@ -386,7 +437,8 @@ def main():
                 sync_points(prod_fb, sim_fb, args.dry_run)
             elif choice == "6":
                 sync_points_by_type(prod_fb, sim_fb, args.dry_run)
-
+            elif choice == "7":
+                sync_farmware_envs(prod_fb, sim_fb, args.dry_run)
 
         elif choice == "5":
             prod_counts = count_resources(prod_fb)
@@ -396,6 +448,8 @@ def main():
         elif choice == "0":
             print("Exiting. Goodbye!")
             break
+        elif choice == "8":
+            print_farmware_envs(prod_fb)
         else:
             print("Invalid choice. Please select a valid option.")
 
