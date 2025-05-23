@@ -1,12 +1,17 @@
 from fastapi import FastAPI
 from app.api.routes import router
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+from starlette.requests import Request
+
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost"],  # ou ["*"] pour tout accepter
+    allow_origins=["http://localhost"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -14,7 +19,4 @@ app.add_middleware(
 
 app.include_router(router)
 
-
-@app.get("/")
-def root():
-    return {"message": "FarmBot Control API is running!"}
+app.mount("/", StaticFiles(directory="app/static", html=True), name="static")
