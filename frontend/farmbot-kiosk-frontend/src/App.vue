@@ -120,19 +120,21 @@ const dragPosition = reactive({
 
 async function move() {
     errorMessage.value = ''
-    const params = {}
+    
 
     const dragSize = 44
     const z = 1 - zSlider.value
     const {width, height} = dragParent.value.getBoundingClientRect()
     const x = dragPosition.x / (width - dragSize)
     const y = 1 - (dragPosition.y / (height - dragSize))
+    const params = {x, y, z}
+    // if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x
+    // if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y
+    // if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z
 
-    if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x
-    if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y
-    if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z
+  console.log({ x, y, z })
 
-    console.log({x,y,z})
+  debugger;
 
     if (Object.keys(params).length === 0) {
         errorMessage.value = '❌ Aucune valeur valide à envoyer.'

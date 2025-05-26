@@ -77,7 +77,23 @@ class FarmBotService:
 
         return self.fb.move(x, y, z, safe_z, speed)
     
+    def normalize(self, value, max_val):
+        if isinstance(value, (int, float)) and 0 <= value <= 1:
+            return value * max_val
+        return value
+    
     async def safe_move_to(self, x=None, y=None, z=None):
+        garden = self.garden_size()
+        max_x = garden["x"]
+        max_y = garden["y"]
+        max_z = garden["z"]
+        
+        print(f"Garden size: {max_x}x{max_y}x{max_z}")
+
+        x = self.normalize(x, max_x)
+        y = self.normalize(y, max_y)
+        z = self.normalize(z, max_z)
+        
         current = self.status_data.get("location_data", {}).get("position", {})
         current_x = current.get("x")
         current_y = current.get("y")
@@ -86,8 +102,6 @@ class FarmBotService:
         if current_x is None or current_y is None or current_z is None:
             return {"status": "error", "message": "Position actuelle inconnue"}
         
-        #print(f"Current position: x={current_x}, y={current_y}, z={current_z}")
-
         final_x = x if x is not None else current_x
         final_y = y if y is not None else current_y
         final_z = z if z is not None else current_z

@@ -13,9 +13,9 @@ def read_status():
 
 @router.post("/move")
 async def move_bot(
-    x: Optional[int] = Query(None),
-    y: Optional[int] = Query(None),
-    z: Optional[int] = Query(None),
+    x: Optional[float] = Query(None),
+    y: Optional[float] = Query(None),
+    z: Optional[float] = Query(None),
     # safe_z: Optional[int] = Query(None),
     # speed: Optional[float] = Query(None),
     # override: Optional[bool] = Query(False),
