@@ -1,9 +1,40 @@
 <template>
     <div class="dashboard">
-        <h1>FarmBot Kiosk</h1>
+      <h1 style="text-align: center; font-size: 4rem;">🌱 Kiosque FarmBot</h1>
 
-        <div class="section">
+      <div class="status-block">
+          <div v-if="status.busy" class="busy-indicator">
+              🔄 En mouvement...
+          </div>
+          <div v-else class="idle-indicator">
+              ✅ Prêt
+          </div>
+          <p><strong>Busy:</strong> {{ status.busy }}</p>
+          <p><strong>Position:</strong> X={{ status.position?.x }} Y={{ status.position?.y }} Z={{ status.position?.z }}</p>
+          <p><strong>Axes:</strong> X={{ status.axis_states?.x }} Y={{ status.axis_states?.y }} Z={{ status.axis_states?.z }}</p>
+          <p><strong>Sync:</strong> {{ status.sync_status }}</p>
+      </div>
+
+      <div id="controls">
+        <div class="robot-block block">
+            <h3>🤖 Robot</h3>
+
             <button @click="goHome">🏠 Aller à l'origine</button>
+            <button @click="move">📍 Déplacer</button>
+            <button @click="lock">🛑 Arrêt d'urgence</button>
+        </div>
+
+        <div class="camera-block block">
+            <h3>📷 Caméra</h3>
+
+            <div v-if="photoError" class="error">{{ photoError }}</div>
+
+            <img v-if="cameraUrl" :src="cameraUrl" alt="Photo FarmBot" class="camera-image" />
+        </div>
+      </div>
+
+        <!--
+        <div class="section">
             <button @click="getStatus">📡 Statut</button>
             <button @click="sendToast">📢 Toast</button>
             <div class="section">
@@ -19,28 +50,13 @@
                     Z:
                     <input type="number" v-model.number="z" placeholder="Entrer Z" />
                 </label>
-                <button @click="move">📍 Déplacer</button>
             </div>
 
-            <button @click="lock">🛑 Arrêt d'urgence</button>
         </div>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         <pre v-if="!errorMessage">{{ result }}</pre>
-
         <pre>{{ result }}</pre>
-        <div class="status-block">
-            <h3>🛰 Statut du FarmBot</h3>
-            <div v-if="status.busy" class="busy-indicator">
-                🔄 En mouvement...
-            </div>
-            <div v-else class="idle-indicator">
-                ✅ Prêt
-            </div>
-            <p><strong>Busy:</strong> {{ status.busy }}</p>
-            <p><strong>Position:</strong> X={{ status.position?.x }} Y={{ status.position?.y }} Z={{ status.position?.z }}</p>
-            <p><strong>Axes:</strong> X={{ status.axis_states?.x }} Y={{ status.axis_states?.y }} Z={{ status.axis_states?.z }}</p>
-            <p><strong>Sync:</strong> {{ status.sync_status }}</p>
-        </div>
+
         <div class="camera-block">
             <h3>📷 Caméra</h3>
             <button @click="takePhoto" :disabled="loadingPhoto">
@@ -51,6 +67,7 @@
 
             <img v-if="cameraUrl" :src="cameraUrl" alt="Photo FarmBot" class="camera-image" />
         </div>
+        -->
     </div>
 </template>
 
@@ -64,7 +81,7 @@ const API_BASE = 'http://localhost:8000'
 const result = ref('')
 const errorMessage = ref('')
 const status = ref({})
-const cameraUrl = ref('')
+const cameraUrl = ref('/public/bot.png')
 const loadingPhoto = ref(false)
 const photoError = ref('')
 
@@ -163,9 +180,28 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 .dashboard {
-    padding: 2rem;
-    font-family: sans-serif;
+  height: 100%;
+  padding: 4rem;
+  font-family: sans-serif;
+  font-weight: normal;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+#header {
+  display: flex;
+  align-items: baseline;
+  gap: 2rem;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
 }
 
 .section {
@@ -206,10 +242,11 @@ input[type="number"] {
 }
 
 .status-block {
-  margin-top: 2rem;
   background-color: #f3f3f3;
   padding: 1rem;
-  border-left: 5px solid #3c82f6;
+  border-top: 5px solid #77b255;
+  display: flex;
+  justify-content: space-between;
 }
 
 .busy-indicator {
@@ -224,8 +261,7 @@ input[type="number"] {
   margin-bottom: 0.5rem;
 }
 
-.camera-block {
-  margin-top: 2rem;
+.block {
   padding: 1rem;
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -243,7 +279,4 @@ input[type="number"] {
   font-weight: bold;
   margin-top: 0.5rem;
 }
-
-
-
 </style>
