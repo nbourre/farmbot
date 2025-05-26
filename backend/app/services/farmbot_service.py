@@ -16,6 +16,8 @@ class FarmBotService:
         self.stop = False
         self.status_data = {}
         
+        self.safe_height = self.fb.safe_z()
+        
         # Load zones from file
         self.zone_manager = ZoneManager()
         self.zone_manager.load_from_file("app/utils/zones.json")
@@ -24,8 +26,28 @@ class FarmBotService:
         self.mqtt = FarmbotMQTTClient(on_status=self._update_status)
         self.mqtt.connect()
         
+        self._idle_event = asyncio.Event()
+        if not self.is_busy():
+            self._idle_event.set()
+ 
+    def is_busy(self):
+        return self.status_data.get("informational_settings", {}).get("busy", True)
+       
     def _update_status(self, payload):
         self.status_data = payload
+        busy = payload.get("informational_settings", {}).get("busy", True)
+
+        if busy:
+            self._idle_event.clear()
+        else:
+            self._idle_event.set()
+            
+    async def wait_until_idle(self, timeout=30):
+        try:
+            await asyncio.wait_for(self._idle_event.wait(), timeout=timeout)
+            return True
+        except asyncio.TimeoutError:
+            return False
 
     def get_current_status(self):
         info = self.status_data.get("informational_settings", {})
@@ -55,6 +77,54 @@ class FarmBotService:
 
         return self.fb.move(x, y, z, safe_z, speed)
     
+    async def safe_move_to(self, x=None, y=None, z=None):
+        current = self.status_data.get("location_data", {}).get("position", {})
+        current_x = current.get("x")
+        current_y = current.get("y")
+        current_z = current.get("z")
+
+        if current_x is None or current_y is None or current_z is None:
+            return {"status": "error", "message": "Position actuelle inconnue"}
+        
+        #print(f"Current position: x={current_x}, y={current_y}, z={current_z}")
+
+        final_x = x if x is not None else current_x
+        final_y = y if y is not None else current_y
+        final_z = z if z is not None else current_z
+
+        crossed_forbidden = self.would_cross_forbidden_zone(final_x, final_y)
+        print(f"Would cross forbidden zone: {crossed_forbidden}")
+        
+        final_zone = self.zone_manager.get_zone_at(final_x, final_y)
+        print(f"Final zone: {final_zone.type if final_zone else 'none'}")
+
+        # ✅ monter automatiquement si on traverse une zone interdite
+        safe = crossed_forbidden or current_z < self.safe_height
+        print(f"Safe move: {safe}")
+
+        # 🔁 Déplacement principal (z = safe_z si nécessaire)
+        self.fb.move(
+            x=x,
+            y=y,
+            z=self.safe_height if z is not None and not (final_zone and final_zone.type != "allowed") else z,
+            safe_z=not safe
+        )
+
+        # ❌ Ne pas redescendre si la zone est interdite
+        z_descended = False
+        if z is not None and (final_zone is None or final_zone.type == "allowed"):
+            if await self.wait_until_idle():
+                self.fb.move(x=None, y=None, z=z)
+                z_descended = True
+
+        return {
+            "status": "moved",
+            "z_descended": z_descended,
+            "final_zone": final_zone.type if final_zone else "none",
+            "crossed_forbidden": crossed_forbidden
+        }
+
+
     def goto_home(self):
         return self.fb.find_home()
         # Endpoint : https://my.farm.bot/api/device/find_home
@@ -76,6 +146,27 @@ class FarmBotService:
         self.stop = False
         self.fb.unlock()
         print("Resuming FarmBot")
+        
+    def would_cross_forbidden_zone(self, x: float, y: float) -> bool:
+        current = self.status_data.get("location_data", {}).get("position", {})
+        x0 = current.get("x")
+        y0 = current.get("y")
+
+        if x0 is None or y0 is None:
+            return False  # Si on ne connaît pas la position, on assume que c'est OK
+
+        # On parcourt la trajectoire à pas régulier (ex: tous les 50 mm)
+        steps = 20
+        for i in range(steps + 1):
+            xi = x0 + (x - x0) * i / steps
+            yi = y0 + (y - y0) * i / steps
+
+            zone = self.zone_manager.get_zone_at(xi, yi)
+            if zone and zone.type == "forbidden":
+                return True  # ❌ on traverse une zone interdite
+
+        return False  # ✅ pas de zone interdite traversée
+
     
     def grid_travel(self, start_x=0, start_y=0, width=None, length=None, rows=None, columns=None, callback=None):
         garden_size = self.garden_size()

@@ -12,15 +12,15 @@ def read_status():
     return farmbot_service.get_status()
 
 @router.post("/move")
-def move_bot(
+async def move_bot(
     x: Optional[int] = Query(None),
     y: Optional[int] = Query(None),
     z: Optional[int] = Query(None),
-    safe_z: Optional[int] = Query(None),
-    speed: Optional[float] = Query(None),
-    override: Optional[bool] = Query(False),
+    # safe_z: Optional[int] = Query(None),
+    # speed: Optional[float] = Query(None),
+    # override: Optional[bool] = Query(False),
 ):
-    return farmbot_service.move(x, y, z, safe_z, speed, override)
+    return await farmbot_service.safe_move_to(x, y, z)
 
 
 @router.get("/garden_size")
