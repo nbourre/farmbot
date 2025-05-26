@@ -4,6 +4,9 @@ import time
 from functools import lru_cache
 from app.utils.mqtt_client import FarmbotMQTTClient
 import asyncio
+from app.utils.zones import ZoneManager
+
+
 
 class FarmBotService:
     def __init__(self):
@@ -12,6 +15,10 @@ class FarmBotService:
         self.fb.set_token(self.token)
         self.stop = False
         self.status_data = {}
+        
+        # Load zones from file
+        self.zone_manager = ZoneManager()
+        self.zone_manager.load_from_file("app/utils/zones.json")
         
         # Initialize MQTT client
         self.mqtt = FarmbotMQTTClient(on_status=self._update_status)

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "allowed_1",
+    "name": "Zone réservée",
+    "x1": 0,
+    "y1": 0,
+    "x2": 1000,
+    "y2": 500,
+    "type": "admin_only"
+  },
+  {
+    "id": "forbidden_1",
+    "name": "Zone interdite centrale",
+    "x1": 1100,
+    "y1": 200,
+    "x2": 1500,
+    "y2": 600,
+    "type": "forbidden"
+  },
+  {
+    "id": "allowed_2",
+    "name": "Terrain de jeu",
+    "x1": 1600,
+    "y1": 0,
+    "x2": 2000,
+    "y2": 500,
+    "type": "allowed"
+  }
+]

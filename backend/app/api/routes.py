@@ -59,3 +59,7 @@ def live_status():
 async def take_photo():
     print("Taking photo")
     return await farmbot_service.take_photo()
+
+@router.get("/zones")
+def get_zones():
+    return farmbot_service.zone_manager.get_all_zones()
