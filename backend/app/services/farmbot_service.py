@@ -79,14 +79,14 @@ class FarmBotService:
     
     def normalize(self, value, max_val):
         if isinstance(value, (int, float)) and 0 <= value <= 1:
-            return value * max_val
+            return int(value * max_val)
         return value
     
     async def safe_move_to(self, x=None, y=None, z=None):
         garden = self.garden_size()
-        max_x = garden["x"]
-        max_y = garden["y"]
-        max_z = garden["z"]
+        max_x = int(garden["x"])
+        max_y = int(garden["y"])
+        max_z = int(-garden["z"])
         
         print(f"Garden size: {max_x}x{max_y}x{max_z}")
 
@@ -110,24 +110,27 @@ class FarmBotService:
         print(f"Would cross forbidden zone: {crossed_forbidden}")
         
         final_zone = self.zone_manager.get_zone_at(final_x, final_y)
-        print(f"Final zone: {final_zone.type if final_zone else 'none'}")
 
         # ✅ monter automatiquement si on traverse une zone interdite
-        safe = crossed_forbidden or current_z < self.safe_height
-        print(f"Safe move: {safe}")
+        do_safe_z = crossed_forbidden or current_z < self.safe_height
+        
+        print(f"Current z: {current_z}, Safe height: {self.safe_height}")
+        print(f"current_z < self.safe_height : {current_z < self.safe_height}")
+        print(f"Safe move: {do_safe_z}")
 
         # 🔁 Déplacement principal (z = safe_z si nécessaire)
         self.fb.move(
             x=x,
             y=y,
             z=self.safe_height if z is not None and not (final_zone and final_zone.type != "allowed") else z,
-            safe_z=not safe
+            safe_z=None if not do_safe_z else do_safe_z
         )
 
         # ❌ Ne pas redescendre si la zone est interdite
         z_descended = False
         if z is not None and (final_zone is None or final_zone.type == "allowed"):
             if await self.wait_until_idle():
+                print(f"Moving to final position: ({final_x}, {final_y}, {final_z})")
                 self.fb.move(x=None, y=None, z=z)
                 z_descended = True
 
