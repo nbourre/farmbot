@@ -1,35 +1,54 @@
 <template>
     <div class="dashboard">
-      <h1 style="text-align: center; font-size: 4rem;">🌱 Kiosque FarmBot</h1>
+      <div style="display: grid; grid-template-columns: 400px auto; grid-template-rows: auto auto; gap: 2rem;">
+        <h1 style="font-size: 3rem; text-align: center;">Kiosque<br>🌱 FarmBot</h1>
+        <div style="display: flex; flex-direction: column;">
 
-      <div class="status-block">
-          <div v-if="status.busy" class="busy-indicator">
-              🔄 En mouvement...
+          <div class="status-block">
+            <div style="text-align: center;">
+              <div v-if="status.busy" class="busy-indicator">
+                  🔄 En mouvement...
+              </div>
+              <div v-else class="idle-indicator">
+                  ✅ Prêt
+              </div>
+            </div>
+
+            <p>
+              <strong>Position:</strong> 
+              X={{ status.position?.x }} 
+              Y={{ status.position?.y }} 
+              Z={{ status.position?.z }}
+            </p>
+
           </div>
-          <div v-else class="idle-indicator">
-              ✅ Prêt
-          </div>
-          <p><strong>Busy:</strong> {{ status.busy }}</p>
-          <p><strong>Position:</strong> X={{ status.position?.x }} Y={{ status.position?.y }} Z={{ status.position?.z }}</p>
-          <p><strong>Axes:</strong> X={{ status.axis_states?.x }} Y={{ status.axis_states?.y }} Z={{ status.axis_states?.z }}</p>
-          <p><strong>Sync:</strong> {{ status.sync_status }}</p>
-      </div>
-
-      <div id="controls">
-        <div class="robot-block block">
-            <h3>🤖 Robot</h3>
-
-            <button @click="goHome">🏠 Aller à l'origine</button>
-            <button @click="move">📍 Déplacer</button>
-            <button @click="lock">🛑 Arrêt d'urgence</button>
         </div>
 
-        <div class="camera-block block">
+        <div style="grid-column: 2; grid-row: 1 / span 2;" class="camera-block block">
             <h3>📷 Caméra</h3>
 
             <div v-if="photoError" class="error">{{ photoError }}</div>
 
             <img v-if="cameraUrl" :src="cameraUrl" alt="Photo FarmBot" class="camera-image" />
+        </div>
+      </div>
+
+      <div class="robot-block block">
+        <h3>🤖 Robot</h3>
+
+        <div style="flex-grow: 1; display: flex; gap: 1rem;">
+          <input v-model="zSlider" type="range" min="0" max="1" step="0.001" orient="vertical" style="appearance: slider-vertical;">
+
+          <div ref="dragParent" style="flex-grow: 1; background-color: gray;">
+            <div class="draggable"></div>
+          </div>
+
+          <div style="display: grid; justify-items: normal; align-items: start; grid-template-rows: repeat(3, auto); grid-template-columns: auto;">
+            <button @click="move">📍 Déplacer</button>
+            <button @click="goHome">🏠 Origine</button>
+
+            <button @click="lock" style="align-self: end;">🛑 Arrêt</button>
+          </div>
         </div>
       </div>
 
@@ -72,11 +91,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted, useTemplateRef } from 'vue'
+
 import axios from 'axios'
+import interact from 'interactjs'
 
 // Change this to match your backend address
 const API_BASE = 'http://localhost:8000'
+
+const dragParent = useTemplateRef('dragParent')
 
 const result = ref('')
 const errorMessage = ref('')
@@ -89,13 +112,27 @@ const x = ref(null)
 const y = ref(null)
 const z = ref(null)
 
+const zSlider = ref(0.5)
+const dragPosition = reactive({
+  x: 0,
+  y: 0
+})
+
 async function move() {
     errorMessage.value = ''
     const params = {}
 
-    if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x.value
-    if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y.value
-    if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z.value
+    const dragSize = 44
+    const z = 1 - zSlider.value
+    const {width, height} = dragParent.value.getBoundingClientRect()
+    const x = dragPosition.x / (width - dragSize)
+    const y = 1 - (dragPosition.y / (height - dragSize))
+
+    if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x
+    if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y
+    if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z
+
+    console.log({x,y,z})
 
     if (Object.keys(params).length === 0) {
         errorMessage.value = '❌ Aucune valeur valide à envoyer.'
@@ -174,6 +211,27 @@ async function takePhoto() {
 onMounted(() => {
   fetchLiveStatus()
   setInterval(fetchLiveStatus, 2000)
+
+  interact('.draggable').draggable({
+   modifiers: [
+    interact.modifiers.restrictRect({
+      restriction: 'parent',
+      endOnly: true
+    }),
+  ],
+    listeners: {
+      start (event) {
+        // console.log(event.type, event.target)
+      },
+      move (event) {
+        dragPosition.x += event.dx
+        dragPosition.y += event.dy
+
+        event.target.style.transform =
+          `translate(${dragPosition.x}px, ${dragPosition.y}px)`
+      },
+    }
+  })
 })
 
 
@@ -183,7 +241,7 @@ onMounted(() => {
 
 .dashboard {
   height: 100%;
-  padding: 4rem;
+  padding: 2rem;
   font-family: sans-serif;
   font-weight: normal;
   display: flex;
@@ -198,10 +256,13 @@ onMounted(() => {
   gap: 2rem;
 }
 
-#controls {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+.draggable {
+  width: 44px;
+  aspect-ratio: 1;
+  background-color: #29e;
+  color: white;
+  border-radius: 0.75em;
+  user-select: none;
 }
 
 .section {
@@ -246,7 +307,9 @@ input[type="number"] {
   padding: 1rem;
   border-top: 5px solid #77b255;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 2rem;
 }
 
 .busy-indicator {
@@ -261,6 +324,19 @@ input[type="number"] {
   margin-bottom: 0.5rem;
 }
 
+.camera-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.robot-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex-grow: 1;
+}
+
 .block {
   padding: 1rem;
   background-color: #f9fafb;
@@ -268,8 +344,9 @@ input[type="number"] {
 }
 
 .camera-image {
-  margin-top: 1rem;
-  max-width: 100%;
+  object-fit: cover;
+  width: 100%;
+  height: 296px;
   border: 1px solid #ccc;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
