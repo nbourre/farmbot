@@ -446,7 +446,7 @@ input[type="number"] {
 }
 
 .camera-image {
-  object-fit: cover;
+  object-fit: contain;
   width: 100%;
   height: 296px;
   border: 1px solid #ccc;
