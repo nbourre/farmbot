@@ -9,6 +9,9 @@
               <div v-if="status.busy" class="busy-indicator">
                   🔄 En mouvement...
               </div>
+              <div v-else-if="status.locked" class="locked-indicator">
+                  🔒 Robot verrouillé!
+              </div>
               <div v-else class="idle-indicator">
                   ✅ Prêt
               </div>
@@ -123,6 +126,7 @@ const status = ref({})
 const cameraUrl = ref('/bot.png')
 const loadingPhoto = ref(false)
 const photoError = ref('')
+const gardenSize = ref({ length : 0, width: 0, height: 0 })
 
 const x = ref(null)
 const y = ref(null)
@@ -138,16 +142,17 @@ async function move() {
     errorMessage.value = ''
     
 
-    const z = 1 - zSlider.value
+    const z = (1 - zSlider.value) * gardenSize.value.z
     const {width, height} = dragParent.value.getBoundingClientRect()
-    const x = dragPosition.x / (width - DRAG_SIZE)
-    const y = 1 - (dragPosition.y / (height - DRAG_SIZE))
+    const x = (dragPosition.x / (width - DRAG_SIZE)) * gardenSize.value.x
+    const y = (1 - (dragPosition.y / (height - DRAG_SIZE))) * gardenSize.value.y
     const params = {x, y, z}
     // if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x
     // if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y
     // if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z
 
   console.log({ x, y, z })
+
 
     if (Object.keys(params).length === 0) {
         errorMessage.value = '❌ Aucune valeur valide à envoyer.'
@@ -164,6 +169,17 @@ async function move() {
 
     console.log(res.data)
 }
+
+async function getGardenSize() {
+    try {
+        const res = await axios.get(`${API_BASE}/garden_size`)
+        gardenSize.value = res.data
+        console.log("Taille du jardin récupérée :", gardenSize.value.x, ", ", gardenSize.value.y, ", ", gardenSize.value.z)
+    } catch (err) {
+        console.error("Erreur de récupération de la taille du jardin :", err)
+    }
+}
+
 
 async function getStatus() {
     const res = await axios.get(`${API_BASE}/status`)
@@ -224,6 +240,7 @@ async function takePhoto() {
 
 
 onMounted(async () => {
+  await getGardenSize()
   fetchLiveStatus()
   setInterval(fetchLiveStatus, 2000)
 
@@ -414,6 +431,12 @@ input[type="number"] {
 
 .idle-indicator {
   color: #059669;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.locked-indicator {
+  color: #dc2626;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
