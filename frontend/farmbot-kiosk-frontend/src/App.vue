@@ -24,12 +24,14 @@
           </div>
         </div>
 
-        <div style="grid-column: 2; grid-row: 1 / span 2;" class="camera-block block">
+        <div style="grid-column: 2; grid-row: 1 / span 2; position: relative;" class="camera-block block">
             <h3>📷 Caméra</h3>
 
             <div v-if="photoError" class="error">{{ photoError }}</div>
 
             <img v-if="cameraUrl" :src="cameraUrl" alt="Photo FarmBot" class="camera-image" />
+
+            <div ref="progress" id="progress" class="animate-blink" style="width: calc(100% - 2rem); position: absolute; height: 0.5rem; background-color: var(--green); bottom: 1rem;"></div>
         </div>
       </div>
 
@@ -112,6 +114,7 @@ const API_BASE = 'http://localhost:8000'
 
 const DRAG_SIZE = 88;
 const dragParent = useTemplateRef('dragParent')
+const progress = useTemplateRef('progress')
 
 const result = ref('')
 const errorMessage = ref('')
@@ -223,6 +226,16 @@ onMounted(() => {
   fetchLiveStatus()
   setInterval(fetchLiveStatus, 2000)
 
+  takePhoto()
+  setInterval(async function() {
+    progress.value.className = 'animate-blink'
+
+    await takePhoto()
+
+    progress.value.className = 'animate-progress'
+    
+  }, 1000 * 5)
+
   interact('.draggable').draggable({
    modifiers: [
     interact.modifiers.restrictRect({
@@ -248,8 +261,44 @@ onMounted(() => {
 
 </script>
 
-<style scoped>
+<style>
+  :root {
+    --green: #77b255;
+  }
 
+@keyframes progress-fill {
+    0% {
+        width: 0px;
+    }
+
+    100% {
+        width: calc(100% - 2rem);
+    }
+}
+
+@keyframes progress-empty {
+    0% {
+        width: calc(100% - 2rem);
+    }
+
+    100% {
+        width: 0;
+        margin-left: calc(100% - 2rem);
+    }
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0.1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+</style>
+
+<style scoped>
 .dashboard {
   height: 100%;
   padding: 2rem;
@@ -344,7 +393,7 @@ input[type="number"] {
 .status-block {
   background-color: #f3f3f3;
   padding: 1rem;
-  border-top: 5px solid #77b255;
+  /* border-top: 5px solid var(--green); */
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -367,6 +416,14 @@ input[type="number"] {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.animate-progress {
+  animation: progress-fill 5s linear forwards;
+}
+
+.animate-blink {
+  animation: blink 0.6s infinite alternate;
 }
 
 .robot-block {
