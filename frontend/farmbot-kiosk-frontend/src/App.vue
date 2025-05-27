@@ -9,6 +9,9 @@
               <div v-if="status.busy" class="busy-indicator">
                   🔄 En mouvement...
               </div>
+              <div v-else-if="status.locked" class="locked-indicator">
+                  🔒 Robot verrouillé!
+              </div>
               <div v-else class="idle-indicator">
                   ✅ Prêt
               </div>
@@ -414,6 +417,12 @@ input[type="number"] {
 
 .idle-indicator {
   color: #059669;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.locked-indicator {
+  color: #dc2626;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
