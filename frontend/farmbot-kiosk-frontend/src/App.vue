@@ -40,9 +40,9 @@
 
         <div style="flex-grow: 1; display: flex;">
           <div style="display: flex; flex-direction: column; gap: 1rem;" :style="{margin: (DRAG_SIZE / 8) + 'px ' + (DRAG_SIZE / 4) + 'px'}">
-            <p style="font-size: 1rem; font-family: monospace;" v-html="(zSlider * 800).toFixed().toString().padStart(3, '&nbsp;') + 'mm'"></p>
+            <p style="font-size: 1rem; font-family: monospace;" v-html="(zSlider * -500).toFixed().toString().padStart(4, '&nbsp;') + 'mm'"></p>
 
-            <input v-model="zSlider" type="range" min="0" max="1" step="0.001" orient="vertical" style="flex-grow: 1; appearance: slider-vertical;">
+            <input v-model="zSlider" type="range" min="0" max="1" step="0.001" orient="vertical" style="accent-color: var(--green); flex-grow: 1; appearance: slider-vertical; transform: rotateZ(180deg);">
           </div>
 
           <div ref="dragParent" style="flex-grow: 1; position: relative;">
@@ -112,7 +112,8 @@ import interact from 'interactjs'
 // Change this to match your backend address
 const API_BASE = 'http://localhost:8000'
 
-const DRAG_SIZE = 88;
+const CAMERA_TIMING = 1000 * 60 * 5
+const DRAG_SIZE = 88
 const dragParent = useTemplateRef('dragParent')
 const progress = useTemplateRef('progress')
 
@@ -202,8 +203,8 @@ async function fetchLiveStatus() {
 }
 
 async function takePhoto() {
-  loadingPhoto.value = true
-  cameraUrl.value = ''
+  // loadingPhoto.value = true
+  // cameraUrl.value = ''
   photoError.value = ''
 
   try {
@@ -217,24 +218,28 @@ async function takePhoto() {
     photoError.value = 'Erreur lors de la prise de photo.'
     console.error(err)
   } finally {
-    loadingPhoto.value = false
+    // loadingPhoto.value = false
   }
 }
 
 
-onMounted(() => {
+onMounted(async () => {
   fetchLiveStatus()
   setInterval(fetchLiveStatus, 2000)
 
-  takePhoto()
-  setInterval(async function() {
-    progress.value.className = 'animate-blink'
-
+  const photo = async () => {
     await takePhoto()
 
     progress.value.className = 'animate-progress'
-    
-  }, 1000 * 5)
+  }
+
+  await photo()
+
+  setInterval(async function() {
+    progress.value.className = 'animate-blink'
+
+    await photo()
+  }, CAMERA_TIMING)
 
   interact('.draggable').draggable({
    modifiers: [
@@ -419,7 +424,7 @@ input[type="number"] {
 }
 
 .animate-progress {
-  animation: progress-fill 5s linear forwards;
+  animation: progress-fill v-bind(CAMERA_TIMING)ms linear forwards;
 }
 
 .animate-blink {
