@@ -230,7 +230,8 @@ onMounted(async () => {
   const photo = async () => {
     await takePhoto()
 
-    progress.value.className = 'animate-progress'
+    progress.value.className = ''
+    requestAnimationFrame(() => progress.value.className = 'animate-progress');
   }
 
   await photo()
@@ -424,7 +425,7 @@ input[type="number"] {
 }
 
 .animate-progress {
-  animation: progress-fill v-bind(CAMERA_TIMING)ms linear forwards;
+  animation: progress-fill calc(v-bind(CAMERA_TIMING) * 1ms) linear forwards;
 }
 
 .animate-blink {
