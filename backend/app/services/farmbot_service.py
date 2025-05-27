@@ -42,12 +42,18 @@ class FarmBotService:
         else:
             self._idle_event.set()
             
-    async def wait_until_idle(self, timeout=30):
-        try:
-            await asyncio.wait_for(self._idle_event.wait(), timeout=timeout)
-            return True
-        except asyncio.TimeoutError:
-            return False
+    async def wait_until_idle(self, timeout: float = 60.0, check_interval: float = 0.1):
+            """
+            Attend que le robot soit dans l'état 'idle' selon les données MQTT reçues.
+            """
+            start = time.time()
+            while time.time() - start < timeout:
+                state = self.status_data.get("state")
+                if state == "idle":
+                    return
+                await asyncio.sleep(check_interval)
+
+            raise TimeoutError("Le robot n’est jamais revenu à l’état 'idle' dans le délai imparti.")
 
     def get_current_status(self):
         info = self.status_data.get("informational_settings", {})
