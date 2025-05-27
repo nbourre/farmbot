@@ -36,15 +36,26 @@
       <div class="robot-block block">
         <h3>🤖 Robot</h3>
 
-        <div style="flex-grow: 1; display: flex; gap: 1rem;">
-          <input v-model="zSlider" type="range" min="0" max="1" step="0.001" orient="vertical" style="appearance: slider-vertical;">
+        <div style="flex-grow: 1; display: flex;">
+          <div style="display: flex; flex-direction: column; gap: 1rem;" :style="{margin: (DRAG_SIZE / 8) + 'px ' + (DRAG_SIZE / 4) + 'px'}">
+            <p style="font-size: 1rem; font-family: monospace;" v-html="(zSlider * 800).toFixed().toString().padStart(3, '&nbsp;') + 'mm'"></p>
 
-          <div ref="dragParent" style="flex-grow: 1; background-color: gray;">
-            <div class="draggable"></div>
+            <input v-model="zSlider" type="range" min="0" max="1" step="0.001" orient="vertical" style="flex-grow: 1; appearance: slider-vertical;">
           </div>
 
-          <div style="display: grid; justify-items: normal; align-items: start; grid-template-rows: repeat(3, auto); grid-template-columns: auto;">
-            <button @click="move">📍 Déplacer</button>
+          <div ref="dragParent" style="flex-grow: 1; position: relative;">
+
+            <div id="border"></div>
+
+            <div id="garden"></div>
+
+            <div class="draggable">
+              <span id="pin">📍</span>
+            </div>
+          </div>
+
+          <div style="display: grid; justify-items: normal; align-items: start; grid-template-rows: repeat(3, auto); grid-template-columns: auto;" :style="{margin: (DRAG_SIZE / 8) + 'px ' + (DRAG_SIZE / 4) + 'px'}">
+            <button @click="move">🎯 Déplacer</button>
             <button @click="goHome">🏠 Origine</button>
 
             <button @click="lock" style="align-self: end;">🛑 Arrêt</button>
@@ -99,12 +110,13 @@ import interact from 'interactjs'
 // Change this to match your backend address
 const API_BASE = 'http://localhost:8000'
 
+const DRAG_SIZE = 88;
 const dragParent = useTemplateRef('dragParent')
 
 const result = ref('')
 const errorMessage = ref('')
 const status = ref({})
-const cameraUrl = ref('/public/bot.png')
+const cameraUrl = ref('/bot.png')
 const loadingPhoto = ref(false)
 const photoError = ref('')
 
@@ -122,19 +134,16 @@ async function move() {
     errorMessage.value = ''
     
 
-    const dragSize = 44
     const z = 1 - zSlider.value
     const {width, height} = dragParent.value.getBoundingClientRect()
-    const x = dragPosition.x / (width - dragSize)
-    const y = 1 - (dragPosition.y / (height - dragSize))
+    const x = dragPosition.x / (width - DRAG_SIZE)
+    const y = 1 - (dragPosition.y / (height - DRAG_SIZE))
     const params = {x, y, z}
     // if (typeof x.value === 'number' && !isNaN(x.value)) params.x = x
     // if (typeof y.value === 'number' && !isNaN(y.value)) params.y = y
     // if (typeof z.value === 'number' && !isNaN(z.value)) params.z = z
 
   console.log({ x, y, z })
-
-  debugger;
 
     if (Object.keys(params).length === 0) {
         errorMessage.value = '❌ Aucune valeur valide à envoyer.'
@@ -259,12 +268,40 @@ onMounted(() => {
 }
 
 .draggable {
-  width: 44px;
+  width: calc(0.5px * v-bind(DRAG_SIZE));
   aspect-ratio: 1;
-  background-color: #29e;
-  color: white;
-  border-radius: 0.75em;
   user-select: none;
+  position: absolute;
+
+  text-align: center;
+
+  --font: calc(0.5px * v-bind(DRAG_SIZE));
+  font-size: var(--font); 
+  line-height: var(--font);
+}
+
+#pin {
+  position: absolute;
+  top: calc(-0.25px * v-bind(DRAG_SIZE));
+  left: 0px;
+}
+
+#border {
+  position: absolute;
+  background-color: slategray;
+  width: calc(100% - (0.25px * v-bind(DRAG_SIZE)));
+  height: calc(100% - (0.25px * v-bind(DRAG_SIZE)));
+  top: calc(0.125px * v-bind(DRAG_SIZE));
+  left: calc(0.125px * v-bind(DRAG_SIZE));
+}
+
+#garden {
+  position: absolute;
+  background-color: sienna;
+  width: calc(100% - (0.5px * v-bind(DRAG_SIZE)));
+  height: calc(100% - (0.5px * v-bind(DRAG_SIZE)));
+  top: calc(0.25px * v-bind(DRAG_SIZE));
+  left: calc(0.25px * v-bind(DRAG_SIZE));
 }
 
 .section {
